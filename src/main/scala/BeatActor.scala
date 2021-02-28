@@ -44,7 +44,6 @@ class BeatActor(val id: Int) extends Actor {
     // mise à jour de leader
     case LeaderChanged(nodeId) => {
       this.leader = nodeId
-      //      this.father ! Message(f"New leader ${nodeId}")
     }
 
   }
