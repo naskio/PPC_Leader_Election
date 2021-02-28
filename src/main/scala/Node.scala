@@ -53,9 +53,6 @@ class Node(val id: Int, val terminaux: List[Terminal]) extends Actor {
       this.allNodes.foreach(node => {
         node ! IsAliveLeader(nodeId)
       })
-      //      if (this.id == nodeId) {
-      //        checkerActor ! IsAliveLeader(this.id)
-      //      }
     }
 
     case Beat(nodeId) => {
@@ -83,9 +80,10 @@ class Node(val id: Int, val terminaux: List[Terminal]) extends Actor {
     case LeaderChanged(nodeId) => {
       //      displayActor ! Message(f"(at ${this.id}) LeaderChanged, new leader is = ${nodeId}")
       beatActor ! LeaderChanged(nodeId)
+      checkerActor ! LeaderChanged(nodeId)
     }
 
-    // transferer ALG,AVS,AVSRSP,StartWithNodeList vers electionActor
+    // transferer ALG,AVS,AVSRSP vers electionActor (sinon ça ne marche pas)
     case ALG(list, nodeId) => {
       electionActor ! ALG(list, nodeId)
     }

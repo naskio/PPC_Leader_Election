@@ -10,9 +10,10 @@ abstract class Tick
 
 case class CheckerTick() extends Tick
 
+// TODO: fix when there is a Leader (!=0) and we start 0 (that leader will consider that 0 is the Leader !!!)
 class CheckerActor(val id: Int, val terminaux: List[Terminal], electionActor: ActorRef) extends Actor {
 
-  var time: Int = 1000
+  var time: Int = 1100
   val father = context.parent
 
   var nodesAlive: List[Int] = List()
@@ -36,11 +37,17 @@ class CheckerActor(val id: Int, val terminaux: List[Terminal], electionActor: Ac
 
     case IsAliveLeader(nodeId) => {
       //      this.father ! Message(f"Leader ${nodeId} is alive")
-      //      if (this.leader == -1 || this.leader != 0) {
-      if (this.leader == -1) {
+      if (this.leader == -1) { // sinon ça ne marche pas si on relance le 0
         this.leader = nodeId
       }
       datesForChecking(nodeId) = new Date()
+    }
+
+    case LeaderChanged(nodeId) => {
+      if (this.leader == -1) { // sinon ça ne marche pas si on relance le 0
+        this.leader = nodeId
+      }
+      father ! Message("I am the new leader")
     }
 
     // A chaque fois qu'on recoit un CheckerTick : on verifie qui est mort ou pas
@@ -59,35 +66,57 @@ class CheckerActor(val id: Int, val terminaux: List[Terminal], electionActor: Ac
       this.datesForChecking --= deadNodes.keys
 
       // affichage
-      this.father ! Message("---------------------------------------------")
+      //      if (deadNodes.size + this.nodesAlive.size > 0) {
+      //        this.father ! Message(f"---------- Updating status (I am ${this.id}${if (this.id == this.leader) " [Leader] " else ""}) ----------")
+      //        this.father ! Message(f"my leader: ${this.leader}")
+      //      }
+      //      deadNodes.keys.foreach(dead => {
+      //        if (dead == this.leader) {
+      //          this.father ! Message(f"Leader ${dead} disconnected")
+      //        } else {
+      //          this.father ! Message(f"Node ${dead} disconnected")
+      //        }
+      //      })
+      //      this.nodesAlive.foreach(x => {
+      //        if (x == this.id) {
+      //          if (x == this.leader) {
+      //            this.father ! Message(f"Me,Leader ${x} is alive")
+      //          } else {
+      //            this.father ! Message(f"Me, ${x} is alive")
+      //          }
+      //        } else {
+      //          if (x == this.leader) {
+      //            this.father ! Message(f"Leader ${x} is alive")
+      //          } else {
+      //            this.father ! Message(f"${x} is alive")
+      //          }
+      //        }
+      //      })
+
+      // affichage 2
+      if (deadNodes.size + this.nodesAlive.size > 0) {
+        this.father ! Message(f"...")
+      }
       deadNodes.keys.foreach(dead => {
         if (dead == this.leader) {
-          this.father ! Message(f"Leader ${dead} disconnected")
+          this.father ! Message(f"Leader ${dead} has disconnected")
         } else {
-          this.father ! Message(f"Node ${dead} disconnected")
+          this.father ! Message(f"Node ${dead} has disconnected")
         }
       })
       this.nodesAlive.foreach(x => {
-        if (x == this.id) {
-          if (x == this.leader) {
-            this.father ! Message(f"Me,Leader ${x} is alive")
-          } else {
-            this.father ! Message(f"Me, ${x} is alive")
-          }
+        if (x == this.leader) {
+          this.father ! Message(f"Leader ${x} is alive")
         } else {
-          if (x == this.leader) {
-            this.father ! Message(f"Leader ${x} is alive")
-          } else {
-            this.father ! Message(f"${x} is alive")
-          }
+          this.father ! Message(f"${x} is alive")
         }
       })
 
       // si le leader est mort => lancer l'election ou pas de leader
       //      if (!this.nodesAlive.contains(this.leader)) { => error
       if (deadNodes.contains(this.leader)) {
+        this.father ! Message(f"We start the election because the Leader ${this.leader} has disconnected")
         this.leader = -1
-        this.father ! Message("Since the Leader is dead, we start the election")
         electionActor ! StartWithNodeList(this.nodesAlive ::: List(this.id))
         //        electionActor ! StartWithNodeList(this.nodesAlive)
       }

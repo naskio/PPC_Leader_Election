@@ -25,6 +25,7 @@ case class AVSRSP(list: List[Int], nodeId: Int) extends LeaderAlgoMessage
 
 case class StartWithNodeList(list: List[Int])
 
+// TODO: refactoring
 class ElectionActor(val id: Int, val terminaux: List[Terminal]) extends Actor {
 
   val father = context.parent
