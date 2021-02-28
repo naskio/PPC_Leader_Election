@@ -15,35 +15,33 @@ case class LeaderChanged(nodeId: Int)
 
 class BeatActor(val id: Int) extends Actor {
 
-  val time: Int = 50
+  val time: Int = 1000 // envoyer un Beat chaque time (ms)
   val father = context.parent
-  var leader: Int = 0 // le premier Leader est 0
+  var leader: Int = 0 // on estime que le premier Leader est 0
 
   def receive = {
 
     // Initialisation
     case Start => {
       self ! BeatTick
-      if (this.id == this.leader) {
-        this.father ! Message("I am the leader")
-      }
     }
 
     // Prevenir tous les autres nodes qu'on est en vie
     case BeatTick => {
-      // re-programmer un autre BeatTick après time (ms)
-      context.system.scheduler.scheduleOnce(time milliseconds, self, BeatTick)
       // envoyer un Beat ou BeatLeader selon le cas
       if (this.id == this.leader) {
         this.father ! BeatLeader(this.id)
       } else {
         this.father ! Beat(this.id)
       }
+      // re-programmer un autre BeatTick après time (ms)
+      context.system.scheduler.scheduleOnce(time milliseconds, self, BeatTick)
     }
 
     // mise à jour de leader
     case LeaderChanged(nodeId) => {
       this.leader = nodeId
+      this.father ! Message(f"New leader ${nodeId}")
     }
 
   }
