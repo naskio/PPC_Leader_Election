@@ -1,45 +1,50 @@
-package upmc.akka.leader
-
-import math._
-
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import akka.actor._
-import akka.io._
-import akka.util.Timeout
-
-import java.net._
 
 sealed trait BeatMessage
-case class Beat (id:Int) extends BeatMessage
-case class BeatLeader (id:Int) extends BeatMessage
 
-case class BeatTick () extends Tick
+case class Beat(id: Int) extends BeatMessage
 
-case class LeaderChanged (nodeId:Int)
+case class BeatLeader(id: Int) extends BeatMessage
 
-class BeatActor (val id:Int) extends Actor {
+case class BeatTick() extends Tick
 
-     val time : Int = 50
-     val father = context.parent
-     var leader : Int = 0 // On estime que le premier Leader est 0
+case class LeaderChanged(nodeId: Int)
 
-    def receive = {
+class BeatActor(val id: Int) extends Actor {
 
-         // Initialisation
-        case Start => {
-             self ! BeatTick
-             if (this.id == this.leader) {
-                  father ! Message ("I am the leader")
-             }
-        }
+  val time: Int = 50
+  val father = context.parent
+  var leader: Int = 0 // le premier Leader est 0
 
-        // Objectif : prevenir tous les autres nodes qu'on est en vie
-        case BeatTick => 
+  def receive = {
 
-        case LeaderChanged (nodeId) => 
-
+    // Initialisation
+    case Start => {
+      self ! BeatTick
+      if (this.id == this.leader) {
+        this.father ! Message("I am the leader")
+      }
     }
 
+    // Prevenir tous les autres nodes qu'on est en vie
+    case BeatTick => {
+      // re-programmer un autre BeatTick après time (ms)
+      context.system.scheduler.scheduleOnce(time milliseconds, self, BeatTick)
+      // envoyer un Beat ou BeatLeader selon le cas
+      if (this.id == this.leader) {
+        this.father ! BeatLeader(this.id)
+      } else {
+        this.father ! Beat(this.id)
+      }
+    }
+
+    // mise à jour de leader
+    case LeaderChanged(nodeId) => {
+      this.leader = nodeId
+    }
+
+  }
 }

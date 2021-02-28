@@ -1,5 +1,3 @@
-package upmc.akka.leader
-
 import com.typesafe.config.ConfigFactory
 import akka.actor._
 
