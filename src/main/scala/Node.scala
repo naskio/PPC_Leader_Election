@@ -14,7 +14,6 @@ case class IsAlive(id: Int) extends AliveMessage
 
 case class IsAliveLeader(id: Int) extends AliveMessage
 
-// TODO: test
 class Node(val id: Int, val terminaux: List[Terminal]) extends Actor {
 
   // Les differents acteurs du systeme
@@ -35,7 +34,7 @@ class Node(val id: Int, val terminaux: List[Terminal]) extends Actor {
 
       // Initilisation des autres remote, pour communiquer avec eux
       terminaux.foreach(n => {
-        if (n.id != this.id) {
+        if (n.id != this.id) { // in CheckerActor: nodesAlive doesn't contain him
           val remote = context.actorSelection("akka.tcp://LeaderSystem" + n.id + "@" + n.ip + ":" + n.port + "/user/Node")
           // Mise a jour de la liste des nodes
           this.allNodes = this.allNodes ::: List(remote)
@@ -50,15 +49,18 @@ class Node(val id: Int, val terminaux: List[Terminal]) extends Actor {
 
     case BeatLeader(nodeId) => {
       // envoyer isAliveLeader vers les autres nodes
-      displayActor ! Message(f"The leader ${nodeId} is alive")
+      //      displayActor ! Message(f"The leader ${nodeId} is alive")
       this.allNodes.foreach(node => {
         node ! IsAliveLeader(nodeId)
       })
+      //      if (this.id == nodeId) {
+      //        checkerActor ! IsAliveLeader(this.id)
+      //      }
     }
 
     case Beat(nodeId) => {
       // envoyer isAlive vers les autres nodes
-      displayActor ! Message(f"${nodeId} is alive")
+      //      displayActor ! Message(f"${nodeId} is alive")
       this.allNodes.foreach(node => {
         node ! IsAlive(nodeId)
       })
@@ -67,20 +69,33 @@ class Node(val id: Int, val terminaux: List[Terminal]) extends Actor {
     // Messages venant des autres nodes : pour nous dire qui est encore en vie ou mort
     case IsAlive(id) => {
       // envoyer isAlive vers checkerActor
-      displayActor ! Message(f"${id} is alive")
+      //      displayActor ! Message(f"${id} is alive")
       checkerActor ! IsAlive(id)
     }
 
     case IsAliveLeader(id) => {
       // envoyer IsAliveLeader vers checkerActor
-      displayActor ! Message(f"The leader ${id} is alive")
+      //      displayActor ! Message(f"The leader ${id} is alive")
       checkerActor ! IsAliveLeader(id)
     }
 
     // Message indiquant que le leader a change
     case LeaderChanged(nodeId) => {
-      displayActor ! Message(f"(at ${this.id}) LeaderChanged, new leader is = ${nodeId}")
+      //      displayActor ! Message(f"(at ${this.id}) LeaderChanged, new leader is = ${nodeId}")
       beatActor ! LeaderChanged(nodeId)
+    }
+
+    // transferer ALG,AVS,AVSRSP,StartWithNodeList vers electionActor
+    case ALG(list, nodeId) => {
+      electionActor ! ALG(list, nodeId)
+    }
+
+    case AVS(list, j) => {
+      electionActor ! AVS(list, j)
+    }
+
+    case AVSRSP(list, k) => {
+      electionActor ! AVSRSP(list, k)
     }
 
   }
