@@ -1,8 +1,10 @@
 # PPC_Leader_Election
-Algorithme d'élection de leader pour un réseau complet.
 
-# Execution
-Pour lançer les noeuds, Nous executons dans des terminaux (ou onglets) différents les commandes suivantes:
+Algorithme d'élection de leader dans un réseau complet.
+
+## Exécution
+
+Pour lancer les noeuds, Nous exécutons dans des terminaux (ou onglets) différents les commandes suivantes:
 
  ```shell
  sbt "run 0"
@@ -11,6 +13,6 @@ Pour lançer les noeuds, Nous executons dans des terminaux (ou onglets) différe
  sbt "run 3"
  ```
 
-> Nous devons lançer le noeud 0 (au moins une fois) pour que le mécanisme commençe à fonctionner.
-> 
-> Idéalement, nous commençons par lançer le noeud 0.
+> Nous devons lancer le noeud 0 (au moins une fois) pour que le mécanisme commence à fonctionner.
+>
+> Idéalement, nous commençons par lancer le noeud 0.
