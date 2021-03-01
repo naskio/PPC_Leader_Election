@@ -78,16 +78,16 @@ class Node(val id: Int, val terminaux: List[Terminal]) extends Actor {
     }
 
     // transferer ALG,AVS,AVSRSP vers electionActor (sinon ça ne marche pas)
-    case ALG(list, nodeId) => {
-      electionActor ! ALG(list, nodeId)
+    case ALG(nodeId) => {
+      electionActor ! ALG(nodeId)
     }
 
-    case AVS(list, j) => {
-      electionActor ! AVS(list, j)
+    case AVS(j) => {
+      electionActor ! AVS(j)
     }
 
-    case AVSRSP(list, k) => {
-      electionActor ! AVSRSP(list, k)
+    case AVSRSP(k) => {
+      electionActor ! AVSRSP(k)
     }
 
   }
