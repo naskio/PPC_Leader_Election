@@ -12,7 +12,7 @@ case class CheckerTick() extends Tick
 
 class CheckerActor(val id: Int, val terminaux: List[Terminal], electionActor: ActorRef) extends Actor {
 
-  var time: Int = 1100
+  var time: Int = 500
   val father = context.parent
 
   var nodesAlive: List[Int] = List()
@@ -56,7 +56,7 @@ class CheckerActor(val id: Int, val terminaux: List[Terminal], electionActor: Ac
 
       // la liste des morts
       val deadNodes = this.datesForChecking.filter(x =>
-        Math.abs(this.lastDate.getTime - x._2.getTime) > this.time
+        Math.abs(this.lastDate.getTime - x._2.getTime) > this.time * 2
       )
 
       // mise à jour de la liste des vivants

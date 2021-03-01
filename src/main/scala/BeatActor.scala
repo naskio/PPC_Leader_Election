@@ -15,7 +15,7 @@ case class LeaderChanged(nodeId: Int)
 
 class BeatActor(val id: Int) extends Actor {
 
-  val time: Int = 200 // envoyer un Beat chaque time (ms)
+  val time: Int = 50 // envoyer un Beat chaque time (ms)
   val father = context.parent
   var leader: Int = 0 // on estime que le premier Leader est 0
 
