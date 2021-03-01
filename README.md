@@ -12,3 +12,5 @@ On execute dans des terminaux (ou onglets) différents les commandes suivantes (
  sbt "run 2"
  sbt "run 3"
  ```
+
+> Il faut commençer par lancer 0
