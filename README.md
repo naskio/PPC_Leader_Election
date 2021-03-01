@@ -13,4 +13,4 @@ On execute dans des terminaux (ou onglets) différents les commandes suivantes (
  sbt "run 3"
  ```
 
-> Il faut commençer par lancer 0
+> Nous devons lançer le noeud 0 (au moins une fois) pour que le mécanisme commençe à fonctionner. Idéalement, nous commençe par lançer le noeud 0.
