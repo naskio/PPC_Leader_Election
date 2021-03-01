@@ -40,8 +40,8 @@ class ElectionActor(val id: Int, val terminaux: List[Terminal]) extends Actor {
     }
   }
 
-  def getNeighbor(index: Int): Int = {
-    var previousIndex = index
+  def getNeighbor(nodeId: Int): Int = {
+    var previousIndex = this.nodesAlive.indexOf(nodeId)
     var neighbor: Int = -1
     do {
       neighbor = (previousIndex + 1) % this.terminaux.length
@@ -58,83 +58,88 @@ class ElectionActor(val id: Int, val terminaux: List[Terminal]) extends Actor {
     }
 
     case StartWithNodeList(list) => {
-
       if (list.isEmpty) {
-        this.nodesAlive = this.nodesAlive ::: List(id)
+        this.nodesAlive = this.nodesAlive ::: List(this.id)
       }
       else {
         this.nodesAlive = list
       }
-
       self ! Initiate
     }
 
     case Initiate => {
       this.status = new Candidate()
-      getRemoteById(this.getNeighbor(this.nodesAlive.indexOf(this.id))) ! ALG(id)
+      getRemoteById(this.getNeighbor(this.id)) ! ALG(this.id)
     }
 
     case ALG(init) => {
-      if (this.status.equals(Passive())) {
-        this.status = new Dummy()
-        getRemoteById(this.getNeighbor(this.nodesAlive.indexOf(this.id))) ! ALG(id)
-      }
-      else if (this.status.equals(Candidate())) {
-
-        this.candPred = init
-        if (id > init) {
-          if (this.candSucc == -1) {
-            this.status = new Waiting()
-            val nodeInit = getRemoteById(init)
-            nodeInit ! AVS(id)
+      this.status match {
+        case Passive() => {
+          this.status = new Dummy()
+          getRemoteById(this.getNeighbor(this.id)) ! ALG(this.id)
+        }
+        case Candidate() => {
+          this.candPred = init
+          if (this.id > init) {
+            if (this.candSucc == -1) {
+              this.status = new Waiting()
+              val nodeInit = getRemoteById(init)
+              nodeInit ! AVS(this.id)
+            }
+            else {
+              val nodeSucc = getRemoteById(this.candSucc)
+              nodeSucc ! AVSRSP(this.candPred)
+              this.status = new Dummy()
+            }
           }
-          else {
-            val nodeSucc = getRemoteById(this.candSucc)
-            nodeSucc ! AVSRSP(this.candPred)
-            this.status = new Dummy()
+          if (init == this.id) {
+            this.status = new Leader()
+            this.father ! LeaderChanged(this.id)
           }
         }
-
-        if (init == id) {
-          this.status = new Leader()
-          father ! LeaderChanged(id)
-        }
+        case _ => {}
       }
     }
 
     case AVS(j) => {
-      if (this.status.equals(Candidate())) {
-        if (this.candPred == -1)
-          this.candSucc = j
-        else {
-          val nodeJ = getRemoteById(j)
-          nodeJ ! AVSRSP(this.candPred)
-          this.status = new Dummy()
+      this.status match {
+        case Candidate() => {
+          if (this.candPred == -1)
+            this.candSucc = j
+          else {
+            val nodeJ = getRemoteById(j)
+            nodeJ ! AVSRSP(this.candPred)
+            this.status = new Dummy()
+          }
         }
+        case Waiting() => {
+          this.candSucc = j
+        }
+        case _ => {}
       }
-      else if (this.status.equals(Waiting()))
-        this.candSucc = j
     }
 
     case AVSRSP(k) => {
-      if (this.status.equals(Waiting())) {
-        if (this.id == k)
-          this.status = new Leader()
-        else {
-          this.candPred = k
-          if (this.candSucc == -1) {
-            if (k < this.id) {
-              this.status = new Waiting()
-              getRemoteById(k) ! AVS(this.id)
+      this.status match {
+        case Waiting() => {
+          if (this.id == k)
+            this.status = new Leader()
+          else {
+            this.candPred = k
+            if (this.candSucc == -1) {
+              if (k < this.id) {
+                this.status = new Waiting()
+                getRemoteById(k) ! AVS(this.id)
+              }
+            }
+            else {
+              this.status = new Dummy()
+              getRemoteById(this.candSucc) ! AVSRSP(k)
             }
           }
-          else {
-            this.status = new Dummy()
-            getRemoteById(this.candSucc) ! AVSRSP(k)
-          }
         }
+        case _ => {}
       }
     }
-
   }
 }
